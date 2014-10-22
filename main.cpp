@@ -222,7 +222,6 @@ int main(void)
     g_schedule = KEY_NONE;
     setLEDHack(LED_POWER_GREEN, MODE_BLINK_1);
     
-    g_serial.printf("Available memory (exact bytes) : %d\n", AvailableMemory(1));
     g_mainboard_i2c.attach(&onI2C);
     
     g_oled.print(0, "Network Barista");
@@ -240,7 +239,6 @@ int main(void)
     last.set(0);
     g_speaker.beep(3);
     g_oled.print(1, "NESCAFE x Tamabi");
-    g_serial.printf("Available memory (exact bytes) : %d\n", AvailableMemory(1));
     timer.start();
     while (true) {
         if (g_button.hasFlag() || update) {
