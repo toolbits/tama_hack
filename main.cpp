@@ -140,8 +140,8 @@ static  void                    powerOffBarista         (void);
 static  void                    setupWifi               (void);
 static  void                    connectWifi             (void);
 static  void                    connectSatellite        (void);
-static  void                    connectTwitterStream    ();
-static  void                    keepaliveTwitterStream  ();
+static  void                    connectTwitterStream    (void);
+static  void                    keepaliveTwitterStream  (void);
 static  void                    tweet                   (const std::string& text);
 static  bool                    checkKey                (KeyType* key, bool* hold);
 static  bool                    readKey                 (KeyType* key);
@@ -164,7 +164,7 @@ static  bool usbram             g_wifi_flag;
 static  string usbram           g_wifi_session;
 static  ir::IRXTime usbram      g_wifi_aos;
 static  ir::IRXTime usbram      g_wifi_los;
-static  int                     g_twitter_stream;
+static  int usbram              g_twitter_stream;
 static  I2C usbram              g_controller_i2c(p9, p10);
 static  InterruptIn usbram      g_controller_irq(p5);
 static  I2CSlaveX usbram        g_mainboard_i2c(p28, p27);
@@ -538,6 +538,7 @@ static void onUdp(int id)
             }
         }
     }
+    return;
 }
 
 static void onI2C(void)
@@ -980,6 +981,7 @@ static void parseQuery(string const& param, map<string, string>* result)
 static void tweet(const std::string& text)
 {
     g_wifi.httpPost(WIFI_TWITTER_HOST, 3000, "/BRWXsm5YGoQnJ", text.c_str());
+    return;
 }
 
 static void onTwitterStream(int id)
@@ -1010,15 +1012,18 @@ static void onTwitterStream(int id)
             }
         }
     }
+    return;
 }
 
-static void connectTwitterStream()
+static void connectTwitterStream(void)
 {
     g_twitter_stream = g_wifi.open(GSwifi::PROTO_TCP, WIFI_TWITTER_HOST, 3001, 0, onTwitterStream);
+    return;
 }
 
-static void keepaliveTwitterStream()
+static void keepaliveTwitterStream(void)
 {
     g_wifi.send(g_twitter_stream, "p", 1);
     g_serial.printf("Twitter Keepalive\n");
+    return;
 }
