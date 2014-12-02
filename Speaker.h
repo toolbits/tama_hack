@@ -47,18 +47,18 @@
 
 class Speaker {
     private:
-                PwmOut          _pwm;
-                bool            _valid;
+                PwmOut                  _pwm;
+                bool                    _valid;
     
     public:
-        explicit                Speaker         (PinName pin);
-                                ~Speaker        (void);
-                void            setup           (void);
-                void            cleanup         (void);
-                void            beep            (int count);
+        explicit                        Speaker             (PinName pin);
+                                        ~Speaker            (void);
+                void                    setup               (void);
+                void                    cleanup             (void);
+                void                    beep                (int count);
     private:
-                                Speaker         (Speaker const&);
-                Speaker&        operator=       (Speaker const&);
+                                        Speaker             (Speaker const&);
+                Speaker&                operator=           (Speaker const&);
 };
 
 /*public */inline Speaker::Speaker(PinName pin) : _pwm(pin), _valid(false)

@@ -65,8 +65,8 @@
     cleanup();
     _gpi.mode(PullNone);
     _flag = false;
-    _gpi.fall(this, &Button::onGPI);
     _valid = true;
+    _gpi.fall(this, &Button::onGPI);
     return;
 }
 
@@ -74,7 +74,6 @@
 {
     if (_valid) {
         _gpi.fall(NULL);
-        _flag = false;
     }
     _valid = false;
     return;

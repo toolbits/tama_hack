@@ -97,6 +97,7 @@ enum OLEDEnum {
 {
     cleanup();
     _i2c.setFrequency(I2C_CLOCK);
+    clearWDT();
     wait_ms(100);
     writeCommand(OLED_DISPLAY_OFF);
     writeCommand(OLED_FUNCTION_REGISTER_RE);
@@ -108,12 +109,15 @@ enum OLEDEnum {
     writeCommand(OLED_FUNCTION_SD_NORMAL);
     writeCommand(OLED_FUNCTION_NORMAL);
     writeCommand(OLED_CLEAR_DISPLAY);
+    clearWDT();
     wait_ms(5);
     writeCommand(OLED_RETURN_HOME);
+    clearWDT();
     wait_ms(5);
     writeCommand(OLED_DISPLAY_ON);
-    attach();
+    _guard = false;
     _valid = true;
+    _ticker.attach_us(this, &OLED::onTicker, TICKER_INTERVAL);
     return;
 }
 
@@ -122,7 +126,7 @@ enum OLEDEnum {
     int i;
     
     if (_valid) {
-        detach();
+        _ticker.detach();
         writeCommand(OLED_DISPLAY_OFF);
         for (i = 0; i < lengthof(_item); ++i) {
             _item[i].clear();
@@ -134,8 +138,8 @@ enum OLEDEnum {
 
 /*public */void OLED::print(int line, ScrollEnum scroll, int second, int immediate, char const* format, va_list ap)
 {
-    char data[256];
-    ItemRec item;
+    static char data[256];
+    static ItemRec item;
     
     if (_valid) {
         if (0 <= line && line < lengthof(_item)) {
@@ -175,7 +179,7 @@ enum OLEDEnum {
                 item.count = 0;
                 item.offset = 0;
                 item.current = -1;
-                detach();
+                _guard = true;
                 if (immediate) {
                     if (!_item[line].empty()) {
                         if (_item[line].front().timeup < 0) {
@@ -187,7 +191,7 @@ enum OLEDEnum {
                 else {
                     _item[line].push_back(item);
                 }
-                attach();
+                _guard = false;
             }
         }
     }
@@ -237,84 +241,74 @@ enum OLEDEnum {
 /*private */void OLED::onTicker(void)
 {
     bool update;
-    char data[LINE_WIDTH];
+    static char data[LINE_WIDTH];
     int value;
     int i;
     
-    for (i = 0; i < lengthof(_item); ++i) {
-        update = false;
-        while (!_item[i].empty()) {
-            ItemRec& item(_item[i].front());
-            if (item.timeup >= 0) {
-                if (item.count >= item.timeup) {
-                    _item[i].pop_front();
-                    memset(data, ' ', sizeof(data));
-                    update = true;
-                    continue;
+    if (!_guard) {
+        for (i = 0; i < lengthof(_item); ++i) {
+            update = false;
+            while (!_item[i].empty()) {
+                ItemRec& item(_item[i].front());
+                if (item.timeup >= 0) {
+                    if (item.count >= item.timeup) {
+                        _item[i].pop_front();
+                        memset(data, ' ', sizeof(data));
+                        update = true;
+                        continue;
+                    }
                 }
-            }
-            else if (item.count >= item.limit) {
-                item.count = 0;
-            }
-            ++item.count;
-            switch (item.scroll) {
-                case SCROLL_FIT:
-                    if (item.offset > static_cast<int>(item.data.length()) - LINE_WIDTH) {
-                        item.offset = 0;
-                    }
-                    if (item.offset != item.current || update) {
-                        memset(data, ' ', sizeof(data));
-                        item.data.copy(data, sizeof(data), item.offset);
-                        update = true;
-                        item.current = item.offset;
-                    }
-                    value = (item.count - 1) % item.limit + 1;
-                    if (!((1 <= value && value < FIT_WAIT) || (item.limit - FIT_WAIT < value && value <= item.limit - 1))) {
+                else if (item.count >= item.limit) {
+                    item.count = 0;
+                }
+                ++item.count;
+                switch (item.scroll) {
+                    case SCROLL_FIT:
+                        if (item.offset > static_cast<int>(item.data.length()) - LINE_WIDTH) {
+                            item.offset = 0;
+                        }
+                        if (item.offset != item.current || update) {
+                            memset(data, ' ', sizeof(data));
+                            item.data.copy(data, sizeof(data), item.offset);
+                            update = true;
+                            item.current = item.offset;
+                        }
+                        value = (item.count - 1) % item.limit + 1;
+                        if (!((1 <= value && value < FIT_WAIT) || (item.limit - FIT_WAIT < value && value <= item.limit - 1))) {
+                            ++item.offset;
+                        }
+                        break;
+                    case SCROLL_OVER:
+                        if (item.offset > static_cast<int>(item.data.length()) + LINE_WIDTH) {
+                            item.offset = 0;
+                        }
+                        if (item.offset != item.current || update) {
+                            value = max(LINE_WIDTH - item.offset, 0);
+                            memset(data, ' ', sizeof(data));
+                            item.data.copy(&data[value], sizeof(data) - value, max(item.offset - LINE_WIDTH, 0));
+                            update = true;
+                            item.current = item.offset;
+                        }
                         ++item.offset;
-                    }
-                    break;
-                case SCROLL_OVER:
-                    if (item.offset > static_cast<int>(item.data.length()) + LINE_WIDTH) {
-                        item.offset = 0;
-                    }
-                    if (item.offset != item.current || update) {
-                        value = max(LINE_WIDTH - item.offset, 0);
-                        memset(data, ' ', sizeof(data));
-                        item.data.copy(&data[value], sizeof(data) - value, max(item.offset - LINE_WIDTH, 0));
-                        update = true;
-                        item.current = item.offset;
-                    }
-                    ++item.offset;
-                    break;
-                case SCROLL_FIXED:
-                default:
-                    if (item.offset != item.current || update) {
-                        memset(data, ' ', sizeof(data));
-                        item.data.copy(data, sizeof(data), item.offset);
-                        update = true;
-                        item.current = item.offset;
-                    }
-                    break;
+                        break;
+                    case SCROLL_FIXED:
+                    default:
+                        if (item.offset != item.current || update) {
+                            memset(data, ' ', sizeof(data));
+                            item.data.copy(data, sizeof(data), item.offset);
+                            update = true;
+                            item.current = item.offset;
+                        }
+                        break;
+                }
+                break;
             }
-            break;
-        }
-        if (update) {
-            writeCommand(OLED_DDRAM_ADDRESS | (i * 0x20));
-            writeString(data, sizeof(data));
+            if (update) {
+                writeCommand(OLED_DDRAM_ADDRESS | (i * 0x20));
+                writeString(data, sizeof(data));
+            }
         }
     }
-    return;
-}
-
-/*private */void OLED::attach(void)
-{
-    _ticker.attach_us(this, &OLED::onTicker, TICKER_INTERVAL);
-    return;
-}
-
-/*private */void OLED::detach(void)
-{
-    _ticker.detach();
     return;
 }
 
@@ -335,7 +329,7 @@ enum OLEDEnum {
 
 /*private */void OLED::writeCommand(unsigned char param)
 {
-    unsigned char data[2];
+    static unsigned char data[2];
     
     data[0] = 0x00;
     data[1] = param;
@@ -346,7 +340,7 @@ enum OLEDEnum {
 
 /*private */void OLED::writeData(unsigned char param)
 {
-    unsigned char data[2];
+    static unsigned char data[2];
     
     data[0] = 0x40;
     data[1] = param;

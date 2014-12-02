@@ -17,7 +17,7 @@
 #define CFG_MAX_SOCKETS 16
 
 #define DEFAULT_WAIT_RESP_TIMEOUT 500
-#define CFG_TIMEOUT 30000 // ms
+#define CFG_TIMEOUT 15000 // ms
 
 #define CFG_CMD_SIZE 128
 

@@ -47,6 +47,7 @@
 #include <stdarg.h>
 #include <deque>
 #include <string>
+#include <algorithm>
 
 #define lengthof(param)         (sizeof(param) / sizeof(param[0]))
 #define asciisof(param)         (lengthof(param) - 1)
@@ -57,7 +58,13 @@ enum ErrorEnum {
     ERROR_OK,
     ERROR_FAILED,
     ERROR_INVALID_STATE,
-    ERROR_INVALID_PARAM
+    ERROR_INVALID_PARAM,
+    ERROR_NO_RESULT,
+    ERROR_TIMEOUT,
+    ERROR_LIMIT
 };
+
+#include "utility.h"
+#include "Barista.h"
 
 #endif

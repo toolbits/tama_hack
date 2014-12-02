@@ -56,43 +56,42 @@ class OLED {
     
     private:
         struct ItemRec {
-            ScrollEnum          scroll;
-            string              data;
-            short               limit;
-            short               timeup;
-            short volatile      count;
-            short volatile      offset;
-            short volatile      current;
+            ScrollEnum                  scroll;
+            string                      data;
+            short                       limit;
+            short                       timeup;
+            short volatile              count;
+            short volatile              offset;
+            short volatile              current;
         };
     
     private:
-                SoftwareI2C     _i2c;
-                Ticker          _ticker;
-                deque<ItemRec>  _item[2];
-                bool            _valid;
+                SoftwareI2C             _i2c;
+                Ticker                  _ticker;
+                deque<ItemRec>          _item[2];
+                bool volatile           _guard;
+                bool                    _valid;
     
     public:
-        explicit                OLED            (PinName sda, PinName scl);
-                                ~OLED           (void);
-                int             getSize         (int line) const;
-                bool            isEmpty         (int line) const;
-                void            setup           (void);
-                void            cleanup         (void);
-                void            print           (int line, ScrollEnum scroll, int second, int immediate, char const* format, va_list ap);
-                void            print           (int line, ScrollEnum scroll, int second, int immediate, char const* format, ...);
-                void            print           (int line, ScrollEnum scroll, int second, char const* format, ...);
-                void            print           (int line, ScrollEnum scroll, char const* format, ...);
-                void            print           (int line, char const* format, ...);
+        explicit                        OLED                (PinName sda, PinName scl);
+                                        ~OLED               (void);
+                int                     getSize             (int line) const;
+                bool                    isEmpty             (int line) const;
+                void                    setup               (void);
+                void                    cleanup             (void);
+                void                    print               (int line, ScrollEnum scroll, int second, int immediate, char const* format, va_list ap);
+                void                    print               (int line, ScrollEnum scroll, int second, int immediate, char const* format, ...);
+                void                    print               (int line, ScrollEnum scroll, int second, char const* format, ...);
+                void                    print               (int line, ScrollEnum scroll, char const* format, ...);
+                void                    print               (int line, char const* format, ...);
     private:
-                void            onTicker        (void);
-                void            attach          (void);
-                void            detach          (void);
-                void            writeString     (char const* param, int length = -1);
-                void            writeCommand    (unsigned char param);
-                void            writeData       (unsigned char param);
+                void                    onTicker            (void);
+                void                    writeString         (char const* param, int length = -1);
+                void                    writeCommand        (unsigned char param);
+                void                    writeData           (unsigned char param);
     private:
-                                OLED            (OLED const&);
-                OLED&           operator=       (OLED const&);
+                                        OLED                (OLED const&);
+                OLED&                   operator=           (OLED const&);
 };
 
 /*public */inline OLED::OLED(PinName sda, PinName scl) : _i2c(sda, scl), _valid(false)

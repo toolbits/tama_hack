@@ -47,22 +47,22 @@
 
 class Button {
     private:
-                InterruptIn     _gpi;
-                bool volatile   _flag;
-                bool            _valid;
+                InterruptIn             _gpi;
+                bool volatile           _flag;
+                bool                    _valid;
     
     public:
-        explicit                Button          (PinName pin);
-                                ~Button         (void);
-                bool            hasFlag         (void) const;
-                void            clearFlag       (void);
-                void            setup           (void);
-                void            cleanup         (void);
+        explicit                        Button              (PinName pin);
+                                        ~Button             (void);
+                bool                    hasFlag             (void) const;
+                void                    clearFlag           (void);
+                void                    setup               (void);
+                void                    cleanup             (void);
     private:
-                void            onGPI           (void);
+                void                    onGPI               (void);
     private:
-                                Button          (Button const&);
-                Button&         operator=       (Button const&);
+                                        Button              (Button const&);
+                Button&                 operator=           (Button const&);
 };
 
 /*public */inline Button::Button(PinName pin) : _gpi(pin), _valid(false)

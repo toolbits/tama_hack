@@ -67,8 +67,10 @@
     if (_valid) {
         while (--count >= 0) {
             _pwm = 0.5;
+            clearWDT();
             wait_ms(100);
             _pwm = 0.0;
+            clearWDT();
             wait_ms(100);
         }
     }
